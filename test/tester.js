@@ -8,7 +8,7 @@ const {
 } = require('../artifacts/contracts/interfaces/IERC20.sol/IERC20.json')
 require('dotenv').config()
 
-// Use fork of mainnet
+// Use fork of ethereum mainnet
 const provider = waffle.provider
 
 describe("FlashSwap Contract", () => {
