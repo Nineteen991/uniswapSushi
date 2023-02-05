@@ -166,7 +166,8 @@ contract UniswapSushiFlash {
       SUSHI_FACTORY,
       SUSHI_ROUTER
     );
-
+    console.log("amount to repay: ", amountToRepay);
+    console.log("amount received: ", trade2Acquired);
     // Check Profitability
     bool profCheck = checkProfitability(amountToRepay, trade2Acquired);
     require(profCheck, "Arbitrage not profitable");
