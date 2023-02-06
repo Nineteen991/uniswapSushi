@@ -15,15 +15,17 @@ import "./interfaces/IERC20.sol";
 contract UniswapSushiFlash {
   using SafeERC20 for IERC20;
 
-  // Factory & Routing Addresses
-  address private constant UNISWAP_FACTORY = 
-    0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
-  address private constant UNISWAP_ROUTER = 
-    0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-  address private constant SUSHI_FACTORY =    
-    0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac;
-  address private constant SUSHI_ROUTER = 
-    0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
+  // Trade Struct to store token addresses
+  struct TokenAddresses {
+    address tokenA;
+    address tokenB;
+    address factoryA;
+    address factoryB;
+    address routerA;
+    address routerB;
+  }
+
+  mapping(address => TokenAddresses) public addr;
 
   // Token Addresses
   address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -81,7 +83,6 @@ contract UniswapSushiFlash {
         address(this),  // address to
         deadline
       )[1];
-
     require(amountReceived > 0, "Tx Aborted: Trade returned 0");
 
     return amountReceived;
@@ -94,19 +95,58 @@ contract UniswapSushiFlash {
   }
 
   // Start Arbitrage
-  function startArbitrage(address _tokenBorrow, uint256 _amount) external {
-    IERC20(WETH).safeApprove(address(UNISWAP_ROUTER), MAX_INT);
-    IERC20(USDC).safeApprove(address(UNISWAP_ROUTER), MAX_INT);
-    IERC20(LINK).safeApprove(address(UNISWAP_ROUTER), MAX_INT);
+  function startArbitrage(
+    address _tokenBorrow, 
+    uint256 _amount, 
+    address _inputTokenA, 
+    address _inputTokenB,
+    address _factoryA,
+    address _factoryB,
+    address _routerA,
+    address _routerB
+  ) external {
+    // Save address data to addr mapping
+    addr[msg.sender] = TokenAddresses (
+      _inputTokenA,
+      _inputTokenB,
+      _factoryA,
+      _factoryB,
+      _routerA,
+      _routerB
+    );
 
-    IERC20(WETH).safeApprove(address(SUSHI_ROUTER), MAX_INT);
-    IERC20(USDC).safeApprove(address(SUSHI_ROUTER), MAX_INT);
-    IERC20(LINK).safeApprove(address(SUSHI_ROUTER), MAX_INT);
+    IERC20(WETH).safeApprove(addr[msg.sender].routerA, MAX_INT);
+    IERC20(USDC).safeApprove(addr[msg.sender].routerA, MAX_INT);
+    IERC20(LINK).safeApprove(addr[msg.sender].routerA, MAX_INT);
+
+    IERC20(addr[msg.sender].tokenA)
+      .safeApprove(addr[msg.sender].routerA, MAX_INT);
+    IERC20(addr[msg.sender].tokenB)
+      .safeApprove(addr[msg.sender].routerA, MAX_INT);
+
+    IERC20(WETH).safeApprove(addr[msg.sender].routerB, MAX_INT);
+    IERC20(USDC).safeApprove(addr[msg.sender].routerB, MAX_INT);
+    IERC20(LINK).safeApprove(addr[msg.sender].routerB, MAX_INT);
+
+    IERC20(addr[msg.sender].tokenB)
+      .safeApprove(addr[msg.sender].routerB, MAX_INT);
+    IERC20(addr[msg.sender].tokenA)
+      .safeApprove(addr[msg.sender].routerB, MAX_INT);
+
+    // Assign a dummy pool if needed
+    address dummyToken;
+    if (_inputTokenA != USDC && _inputTokenB != USDC) {
+      dummyToken = USDC;
+    } else if (_inputTokenA != LINK && _inputTokenB != LINK) {
+      dummyToken = LINK;
+    } else {
+      dummyToken = WETH;
+    }
 
     // Get the pool address for the token pair
-    address pair = IUniswapV2Factory(UNISWAP_FACTORY).getPair(
+    address pair = IUniswapV2Factory(addr[msg.sender].factoryA).getPair(
       _tokenBorrow,
-      WETH
+      dummyToken
     );
     require(pair != address(0), "Pool does not exist");
 
@@ -128,22 +168,22 @@ contract UniswapSushiFlash {
     uint256 _amount1,
     bytes calldata _data
   ) external {
+    // Decode data for calc the repayment
+    (address tokenBorrow, uint256 amount, address myAddress) = abi.decode(
+      _data,
+      (address, uint256, address)
+    );
+
     // Ensure this request came from the contract
     address token0 = IUniswapV2Pair(msg.sender).token0();
     address token1 = IUniswapV2Pair(msg.sender).token1();
-    address pair = IUniswapV2Factory(UNISWAP_FACTORY).getPair(
+    address pair = IUniswapV2Factory(addr[myAddress].factoryA).getPair(
       token0,
       token1
     );
 
     require(msg.sender == pair, "The sender needs to match the pair");
     require(_sender == address(this), "Sender should match this contract");
-
-    // Decode data for calc the repayment
-    (address tokenBorrow, uint256 amount, address myAddress) = abi.decode(
-      _data,
-      (address, uint256, address)
-    );
 
     // Calculate the amount to repay at the end
     uint256 fee = ((amount * 3) / 997) + 1;
@@ -153,18 +193,18 @@ contract UniswapSushiFlash {
 
     // Place trades
     uint256 trade1Acquired = placeTrade(
-      USDC,
-      LINK,
+      addr[myAddress].tokenA,
+      addr[myAddress].tokenB,
       loanAmount,
-      UNISWAP_FACTORY,
-      UNISWAP_ROUTER
+      addr[myAddress].factoryA,
+      addr[myAddress].routerB
     );
     uint256 trade2Acquired = placeTrade(
-      LINK,
-      USDC,
+      addr[myAddress].tokenB,
+      addr[myAddress].tokenA,
       trade1Acquired,
-      SUSHI_FACTORY,
-      SUSHI_ROUTER
+      addr[myAddress].factoryB,
+      addr[myAddress].routerB
     );
     console.log("amount to repay: ", amountToRepay);
     console.log("amount received: ", trade2Acquired);
@@ -173,7 +213,7 @@ contract UniswapSushiFlash {
     require(profCheck, "Arbitrage not profitable");
 
     // Pay Myself
-    IERC20 otherToken = IERC20(USDC);
+    IERC20 otherToken = IERC20(addr[myAddress].tokenA);
     otherToken.transfer(myAddress, trade2Acquired - amountToRepay);
 
     // Pay Loan Back

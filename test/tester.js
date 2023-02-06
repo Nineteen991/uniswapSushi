@@ -20,6 +20,14 @@ describe("FlashSwap Contract", () => {
 
   const DECIMALS = 6
 
+  const UNISWAP_FACTORY = 
+    "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f"
+  const UNISWAP_ROUTER = 
+    "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
+  const SUSHI_FACTORY =    
+    "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac"
+  const SUSHI_ROUTER = 
+    "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
   const USDC_WHALE = "0x7713974908be4bed47172370115e8b1219f4a5f0"
   const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
   const LINK = "0x514910771AF9Ca656af840dff83E8264EcF986CA"
@@ -76,8 +84,14 @@ describe("FlashSwap Contract", () => {
 
     it("Executes the arbitrage", async () => {
       txArbitrage = await FLASHSWAP.startArbitrage(
-        BASE_TOKEN_ADDRESS,
+        WETH,
         BORROW_AMOUNT,
+        WETH,
+        LINK,
+        SUSHI_FACTORY,
+        UNISWAP_FACTORY,
+        SUSHI_ROUTER,
+        UNISWAP_ROUTER
       )
       assert(txArbitrage)
 
