@@ -24,13 +24,12 @@ contract UniswapSushiFlash {
     address routerA;
     address routerB;
   }
-
   mapping(address => TokenAddresses) public addr;
 
   // Token Addresses
   address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
   address private constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-  address private constant LINK = 0x514910771AF9Ca656af840dff83E8264EcF986CA;
+  address private constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
 
   // Trade Variables
   uint256 private deadline = block.timestamp + 1 days;
@@ -62,7 +61,7 @@ contract UniswapSushiFlash {
       _fromToken, 
       _toToken
     );
-    require(pair != address(0), "Pool does not exist");
+    require(pair != address(0), "Pool does not exist or huge price impact");
 
     // Calculate Amount Out
     address[] memory path = new address[](2);
@@ -89,7 +88,7 @@ contract UniswapSushiFlash {
   }
 
   function checkProfitability(uint256 _moneyOwed, uint256 _moneyGained)
-    private returns (bool)
+    private pure returns (bool)
   {
     return _moneyGained > _moneyOwed;
   }
@@ -115,18 +114,10 @@ contract UniswapSushiFlash {
       _routerB
     );
 
-    IERC20(WETH).safeApprove(addr[msg.sender].routerA, MAX_INT);
-    IERC20(USDC).safeApprove(addr[msg.sender].routerA, MAX_INT);
-    IERC20(LINK).safeApprove(addr[msg.sender].routerA, MAX_INT);
-
     IERC20(addr[msg.sender].tokenA)
       .safeApprove(addr[msg.sender].routerA, MAX_INT);
     IERC20(addr[msg.sender].tokenB)
       .safeApprove(addr[msg.sender].routerA, MAX_INT);
-
-    IERC20(WETH).safeApprove(addr[msg.sender].routerB, MAX_INT);
-    IERC20(USDC).safeApprove(addr[msg.sender].routerB, MAX_INT);
-    IERC20(LINK).safeApprove(addr[msg.sender].routerB, MAX_INT);
 
     IERC20(addr[msg.sender].tokenB)
       .safeApprove(addr[msg.sender].routerB, MAX_INT);
@@ -135,12 +126,14 @@ contract UniswapSushiFlash {
 
     // Assign a dummy pool if needed
     address dummyToken;
-    if (_inputTokenA != USDC && _inputTokenB != USDC) {
-      dummyToken = USDC;
-    } else if (_inputTokenA != LINK && _inputTokenB != LINK) {
-      dummyToken = LINK;
-    } else {
+    if (_tokenBorrow != WETH) {
+      IERC20(WETH).safeApprove(addr[msg.sender].routerA, MAX_INT);
+      IERC20(WETH).safeApprove(addr[msg.sender].routerB, MAX_INT);
       dummyToken = WETH;
+    } else {
+      IERC20(USDC).safeApprove(addr[msg.sender].routerA, MAX_INT);
+      IERC20(USDC).safeApprove(addr[msg.sender].routerB, MAX_INT);
+      dummyToken = USDC;
     }
 
     // Get the pool address for the token pair
@@ -148,7 +141,8 @@ contract UniswapSushiFlash {
       _tokenBorrow,
       dummyToken
     );
-    require(pair != address(0), "Pool does not exist");
+
+    require(pair != address(0), "Pool does not exist or huge price impact");
 
     address token0 = IUniswapV2Pair(pair).token0();
     address token1 = IUniswapV2Pair(pair).token1();
@@ -177,11 +171,12 @@ contract UniswapSushiFlash {
     // Ensure this request came from the contract
     address token0 = IUniswapV2Pair(msg.sender).token0();
     address token1 = IUniswapV2Pair(msg.sender).token1();
+
     address pair = IUniswapV2Factory(addr[myAddress].factoryA).getPair(
       token0,
       token1
     );
-
+    
     require(msg.sender == pair, "The sender needs to match the pair");
     require(_sender == address(this), "Sender should match this contract");
 

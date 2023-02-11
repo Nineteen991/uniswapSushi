@@ -32,6 +32,7 @@ describe("FlashSwap Contract", () => {
   const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
   const LINK = "0x514910771AF9Ca656af840dff83E8264EcF986CA"
   const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+  const ENJ = "0xF629cBd94d3791C9250152BD8dfBDF380E2a3B9c"
 
   const BASE_TOKEN_ADDRESS = USDC
 
@@ -56,7 +57,7 @@ describe("FlashSwap Contract", () => {
     BORROW_AMOUNT = ethers.utils.parseUnits(borrowAmountHuman, DECIMALS)
 
     // Configure funding (only needed for testing)
-    initialFundingHuman = "1"
+    initialFundingHuman = "100"
     FUND_AMOUNT = ethers.utils.parseUnits(initialFundingHuman, DECIMALS)
 
     // Fund our contract (only needed for testing)
@@ -84,9 +85,9 @@ describe("FlashSwap Contract", () => {
 
     it("Executes the arbitrage", async () => {
       txArbitrage = await FLASHSWAP.startArbitrage(
-        WETH,
+        BASE_TOKEN_ADDRESS,
         BORROW_AMOUNT,
-        WETH,
+        USDC,
         LINK,
         SUSHI_FACTORY,
         UNISWAP_FACTORY,

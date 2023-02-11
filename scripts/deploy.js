@@ -1,8 +1,7 @@
 const { ethers } = require('hardhat')
 
 async function main() {
-  const [deployer] = await ethers.getSigners()  // get 1st HH address
-
+  const [deployer] = await ethers.getSigners()
   console.log("Deploying contracts w/ the acct: ", deployer.address)
   console.log("Acct balance: ", (await deployer.getBalance()).toString())
 
