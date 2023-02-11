@@ -88,11 +88,11 @@ describe("FlashSwap Contract", () => {
         BASE_TOKEN_ADDRESS,
         BORROW_AMOUNT,
         USDC,
-        LINK,
-        SUSHI_FACTORY,
+        WETH,
         UNISWAP_FACTORY,
+        SUSHI_FACTORY,
+        UNISWAP_ROUTER,
         SUSHI_ROUTER,
-        UNISWAP_ROUTER
       )
       assert(txArbitrage)
 
@@ -130,3 +130,9 @@ describe("FlashSwap Contract", () => {
 
 // binance
 // npx hardhat run --network testnet scripts/deploy.js
+
+
+// {
+//   gasLimit: 6000000,
+//   gasPrice: ethers.utils.parseUnits("5.5", "gwei"),
+// },

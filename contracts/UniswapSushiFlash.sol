@@ -201,8 +201,7 @@ contract UniswapSushiFlash {
       addr[myAddress].factoryB,
       addr[myAddress].routerB
     );
-    console.log("amount to repay: ", amountToRepay);
-    console.log("amount received: ", trade2Acquired);
+
     // Check Profitability
     bool profCheck = checkProfitability(amountToRepay, trade2Acquired);
     require(profCheck, "Arbitrage not profitable");
