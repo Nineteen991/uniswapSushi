@@ -6,7 +6,7 @@ async function main() {
   console.log("Acct balance: ", (await deployer.getBalance()).toString())
 
   // get smart contract
-  const Token = await ethers.getContractFactory("UniswapSushiFlash")
+  const Token = await ethers.getContractFactory("BSCFlash")
   const token = await Token.deploy()  // deploy smart contract
 
   console.log("Token address: ", token.address)
@@ -15,6 +15,6 @@ async function main() {
 main()
   .then(() => process.exit(0))
   .catch(err => {
-    console.error("main broken: ", err)
+    console.error("mains broken: ", err)
     process.exit(1)
   })

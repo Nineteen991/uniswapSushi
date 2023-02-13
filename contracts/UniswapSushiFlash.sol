@@ -6,13 +6,13 @@ import "hardhat/console.sol";
 // Uniswap interface & library imports
 import "./libraries/UniswapV2Library.sol";
 import "./libraries/SafeERC20.sol";
-import "./interfaces/IUniswapV2Router01.sol";
-import "./interfaces/IUniswapV2Router02.sol";
-import "./interfaces/IUniswapV2Pair.sol";
-import "./interfaces/IUniswapV2Factory.sol";
 import "./interfaces/IERC20.sol";
+import "./interfaces/IPancakeFactory.sol";
+import "./interfaces/IPancakeRouter01.sol";
+import "./interfaces/IPancakeRouter02.sol";
+import "./interfaces/IUniswapV2Pair.sol";
 
-contract UniswapSushiFlash {
+contract BSCFlash {
   using SafeERC20 for IERC20;
 
   // Trade Struct to store token addresses
@@ -27,9 +27,12 @@ contract UniswapSushiFlash {
   mapping(address => TokenAddresses) public addr;
 
   // Token Addresses
-  address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-  address private constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-  address private constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+  address private constant WBNB = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c;
+  address private constant BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
+  address private constant CAKE = 0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82;
+  // address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+  // address private constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+  // address private constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
 
   // Trade Variables
   uint256 private deadline = block.timestamp + 1 days;
@@ -57,10 +60,11 @@ contract UniswapSushiFlash {
     address factory,
     address router
   ) private returns (uint256) {
-    address pair = IUniswapV2Factory(factory).getPair(
+    address pair = IPancakeFactory(factory).getPair(
       _fromToken, 
       _toToken
     );
+    console.log('da pair 67: ', pair);
     require(pair != address(0), "Pool does not exist or huge price impact");
 
     // Calculate Amount Out
@@ -68,13 +72,13 @@ contract UniswapSushiFlash {
     path[0] = _fromToken;
     path[1] = _toToken;
 
-    uint256 amountToBeTraded = IUniswapV2Router01(router).getAmountsOut(
+    uint256 amountToBeTraded = IPancakeRouter01(router).getAmountsOut(
       _amountIn,
       path
     )[1];
-
+console.log('amount to be traded: ', amountToBeTraded);
     // Perform Arbitrage - Swap for another token
-    uint256 amountReceived = IUniswapV2Router01(router)
+    uint256 amountReceived = IPancakeRouter01(router)
       .swapExactTokensForTokens(
         _amountIn,
         amountToBeTraded,  // amountOutMin
@@ -82,6 +86,7 @@ contract UniswapSushiFlash {
         address(this),  // address to
         deadline
       )[1];
+      console.log('amountRecieved: ', amountReceived);
     require(amountReceived > 0, "Tx Aborted: Trade returned 0");
 
     return amountReceived;
@@ -126,21 +131,22 @@ contract UniswapSushiFlash {
 
     // Assign a dummy pool if needed
     address dummyToken;
-    if (_tokenBorrow != WETH) {
-      IERC20(WETH).safeApprove(addr[msg.sender].routerA, MAX_INT);
-      IERC20(WETH).safeApprove(addr[msg.sender].routerB, MAX_INT);
-      dummyToken = WETH;
+    if (_tokenBorrow != WBNB) {
+      IERC20(WBNB).safeApprove(addr[msg.sender].routerA, MAX_INT);
+      IERC20(WBNB).safeApprove(addr[msg.sender].routerB, MAX_INT);
+      dummyToken = WBNB;
     } else {
-      IERC20(USDC).safeApprove(addr[msg.sender].routerA, MAX_INT);
-      IERC20(USDC).safeApprove(addr[msg.sender].routerB, MAX_INT);
-      dummyToken = USDC;
+      IERC20(BUSD).safeApprove(addr[msg.sender].routerA, MAX_INT);
+      IERC20(BUSD).safeApprove(addr[msg.sender].routerB, MAX_INT);
+      dummyToken = BUSD;
     }
-
+console.log('dummy: ', dummyToken);
     // Get the pool address for the token pair
-    address pair = IUniswapV2Factory(addr[msg.sender].factoryA).getPair(
+    address pair = IPancakeFactory(addr[msg.sender].factoryA).getPair(
       _tokenBorrow,
       dummyToken
     );
+    console.log('da pair 149: ', pair);
 
     require(pair != address(0), "Pool does not exist or huge price impact");
 
@@ -148,7 +154,10 @@ contract UniswapSushiFlash {
     address token1 = IUniswapV2Pair(pair).token1();
     uint256 amount0Out = _tokenBorrow == token0 ? _amount : 0;
     uint256 amount1Out = _tokenBorrow == token1 ? _amount : 0;
-
+console.log('token0: ', token0);
+console.log('token1: ', token1);
+console.log('mout0: ', amount0Out);
+console.log('amount1: ', amount1Out);
     // Passing data as bytes so that the 'swap' fn knows it's a flashloan
     bytes memory data = abi.encode(_tokenBorrow, _amount, msg.sender);
 
@@ -172,10 +181,11 @@ contract UniswapSushiFlash {
     address token0 = IUniswapV2Pair(msg.sender).token0();
     address token1 = IUniswapV2Pair(msg.sender).token1();
 
-    address pair = IUniswapV2Factory(addr[myAddress].factoryA).getPair(
+    address pair = IPancakeFactory(addr[myAddress].factoryA).getPair(
       token0,
       token1
     );
+    console.log('da pair 185: ', pair);
     
     require(msg.sender == pair, "The sender needs to match the pair");
     require(_sender == address(this), "Sender should match this contract");
