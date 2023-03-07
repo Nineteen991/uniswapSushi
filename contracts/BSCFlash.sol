@@ -3,7 +3,7 @@ pragma solidity >=0.6.6;
 
 import "hardhat/console.sol";
 
-// Uniswap interface & library imports
+// Uniswap & PancakeSwap interface & library imports
 import "./libraries/UniswapV2Library.sol";
 import "./libraries/SafeERC20.sol";
 import "./interfaces/IERC20.sol";
@@ -30,9 +30,6 @@ contract BSCFlash {
   address private constant WBNB = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c;
   address private constant BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
   address private constant CAKE = 0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82;
-  // address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-  // address private constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-  // address private constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
 
   // Trade Variables
   uint256 private deadline = block.timestamp + 1 days;

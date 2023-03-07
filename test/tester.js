@@ -8,7 +8,6 @@ const {
 } = require('../artifacts/contracts/interfaces/IERC20.sol/IERC20.json')
 require('dotenv').config()
 
-// Use fork of ethereum mainnet
 const provider = waffle.provider
 
 describe("FlashSwap Contract", () => {
@@ -31,20 +30,6 @@ describe("FlashSwap Contract", () => {
   const CAKE = "0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82"
   const CROX = "0x2c094F5A7D1146BB93850f629501eB749f6Ed491"
   const FROYO = "0xe369fec23380f9F14ffD07a1DC4b7c1a9fdD81c9"
-
-  // const UNISWAP_FACTORY = 
-  //   "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f"
-  // const UNISWAP_ROUTER = 
-  //   "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
-  // const SUSHI_FACTORY =    
-  //   "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac"
-  // const SUSHI_ROUTER = 
-  //   "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
-  // const USDC_WHALE = "0x7713974908be4bed47172370115e8b1219f4a5f0"
-  // const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
-  // const LINK = "0x514910771AF9Ca656af840dff83E8264EcF986CA"
-  // const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
-  // const ENJ = "0xF629cBd94d3791C9250152BD8dfBDF380E2a3B9c"
 
   const BASE_TOKEN_ADDRESS = BUSD
 
@@ -121,30 +106,9 @@ describe("FlashSwap Contract", () => {
       )
       console.log("Balance of CAKE: ", formattedBalCAKE)
     })
-
-    // it("Provides GAS output", async () => {
-    //   const txReceipt = await provider.getTransactionReceipt(txArbitrage.hash)
-    //   const effGasPrice = txReceipt.effectiveGasPrice
-    //   const txGasUsed = txReceipt.gasUsed
-    //   const gasUsedETH = effGasPrice * txGasUsed
-
-    //   console.log(
-    //     "Total Gas BUSD: ", 
-    //     ethers.utils.formatEther(gasUsedETH.toString()) * 3  // exchange rate
-    //   )
-    //   expect(gasUsedETH).not.equal(0)
-    // })
   })
 })
 
-// ethereum testnet
-// npx hardhat run scripts/deploy.js --network testnet
 
 // binance
 // npx hardhat run --network testnet scripts/deploy.js
-
-
-// {
-//   gasLimit: 6000000,
-//   gasPrice: ethers.utils.parseUnits("5.5", "gwei"),
-// },
